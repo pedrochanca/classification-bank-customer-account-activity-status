@@ -10,6 +10,7 @@
 #  library("devtools")
 #}
 #devtools::install_github("mdscheuerell/muti")
+
 # Calling the necessary Libraries
 library(ggplot2)
 library(e1071)
@@ -21,31 +22,18 @@ library("muti")
 library(mRMRe)
 
 # Loading data
+# ------------
 options(warn = FALSE)
-train_data <- try(read.table("Input/client_train.txt"))
-if (class(train_data) == "try-error") {
-  folder = "Input/"
-  file = "client_train.txt"
-  cat("Downloading the data instead.")
-  dir.create(folder)
-  train_data <- read.table("http://web.tecnico.ulisboa.pt/~ist13493/MEDM2020/Project1/Group3Data/client_train.txt")
-  write.table(train_data, file=paste(folder, file, sep=''), append = FALSE, sep = " ", dec = ".",
-              row.names = FALSE, col.names = FALSE)
-}
-test_data <- try(read.table("Input/client_test_marked.txt"))
-if (class(test_data) == "try-error") {
-  file = "client_test_marked.txt"
-  print("Downloading the data instead.")
-  test_data <- read.table("http://web.tecnico.ulisboa.pt/~ist13493/MEDM2020/Project1/Group3Data/client_test_marked.txt")
-  write.table(test_data, file=paste(folder, file, sep=''), append = FALSE, sep = " ", dec = ".",
-              row.names = FALSE, col.names = FALSE)
-}
+train_data <- try(read.table("Data/client_train.txt"))
+test_data <- try(read.table("Data/client_test_marked.txt"))
+
 options(warn = TRUE)
 
 # Checking the data
 head(train_data)
 
 # Cleaning the data
+# -----------------
 train_data[,1] <- as.factor(as.numeric(train_data[,1]) - 1)
 train_data[,2] <- as.factor(as.numeric(train_data[,2]) - 1)
 train_data[,3] <- as.factor(as.numeric(train_data[,3]) - 1)
@@ -58,6 +46,7 @@ write.table(train_data, file="train_data_orig", append = FALSE, sep = " ", dec =
             row.names = FALSE, col.names = FALSE)
 
 # Adding some extra features as transformations of the existing ones
+# ------------------------------------------------------------------
 train_data[,37] <- train_data[,11]^2 + train_data[,13]^2
 train_data[,38] <- 5*(train_data[,13]- mean(train_data[,13]))^2 + (train_data[,33]- mean(train_data[,33]))^2
 train_data[,39] <- (train_data[,19]- mean(train_data[,19]))^2 + (train_data[,33]- mean(train_data[,33]))^2
@@ -80,6 +69,8 @@ write.table(train_data, file="train_data_new", append = FALSE, sep = " ", dec = 
 
 
 # Descriptive Statistics
+# ----------------------
+
 v <-sapply(train_data[,7:36], var)
 m <-sapply(train_data[,7:36], mean)
 q <-sapply(train_data[,7:36], quantile)
