@@ -129,6 +129,12 @@ dt_test_extra[, 38] <- (
 )
 dt_test_extra[, 39] <- copy(dt_test[, 37])
 
+# Saving the dataset
+write.table(
+  dt_test_extra,
+  file = "Data/dt_test_original_extra.txt",
+  append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
+)
 
 # New Train dataset with processed features
 # This was done after having assessed the results from the EDA
