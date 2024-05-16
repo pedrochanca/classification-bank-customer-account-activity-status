@@ -1,459 +1,244 @@
-# Principal Components Analysis (PCA) on the Train Dataset
-
-library("rrcov")
-library("factoextra")
+# Libraries
 library("data.table")
 
-# Get Train Dataset
+# Functions
+# ---------
+get_eigenvalues <- function(pca_result) {
+  # Extract the standard deviations of the principal components
+  sdev <- pca_result$sdev
+
+  # Calculate the eigenvalues (variances of the principal components)
+  eigen_values <- sdev^2
+
+  return(eigen_values)
+}
+
+get_variance_explained <- function(eigen_values) {
+  # Calculate the proportion of variance explained
+  prop_variance_explained <- eigen_values / sum(eigen_values)
+
+  # Calculate the cumulative proportion of variance explained
+  cum_variance_explained <- cumsum(prop_variance_explained)
+
+  return(list(
+    prop_variance_explained = prop_variance_explained,
+    cum_variance_explained = cum_variance_explained
+  ))
+}
+
+get_principal_components <- function(
+    dt, combinations, n_components, n_examples, n_numerical_features) {
+  # Populate the list with the repeated sequences
+  final <- list()
+  for (i in 1:n_components) {
+    final[[i]] <- 1:n_examples
+  }
+
+  # Get principal components
+  for (i in 1:n_components) {
+    for (j in 1:n_examples) {
+      final[[i]][j] <- 0
+      for (c in 1:n_numerical_features) {
+        final[[i]][j] <- (
+          final[[i]][j] + combinations[c, i] * dt[j, c]
+        )
+      }
+    }
+  }
+
+  return(final)
+}
+
+# PCA on ORIGINAL Train Dataset
+# -----------------------------
 dt_train <- read.table("Data/dt_train_original.txt")
 
+# Convert categorical columns to factors
+dt_train[, c(1:6, 37)] <- lapply(dt_train[c(1:6, 37)], as.factor)
+
 # Apply standardized PCA to the continuous variables
-pca_st <- prcomp(train_data[, 7:36], scale = TRUE)
+pca_result <- prcomp(dt_train[, 7:36], scale = TRUE)
+
+# Picking Number of components from PCA
+eigen_values <- get_eigenvalues(pca_result)
+eigen_values
+
+variance_explained <- get_variance_explained(eigen_values)
+variance_explained # let's pick 9 components
 
 # Lets keep 9 components
-combinations <- pca_st$rotation[, 1:9]
+combinations <- pca_result$rotation[, 1:9]
 combinations
 
 # Lets ignore the categorical variables when creating the new dataset
-train_data_pca <- train_data[7:36]
+dt_train_pca <- copy(dt_train[7:36])
 
-# Get the 1st PC
-final <- 1:12000
-for (i in 1:12000) {
-  final[i] <- 0
-  for (c in 1:30) {
-    final[i] <- final[i] + combinations[c, 1] * train_data_pca[i, c]
-  }
-}
+# Define number of examples and components
+n_numerical_features <- 30
+n_examples <- 12000
+n_components <- 9
 
-# Get the 2nd PC
-final2 <- 1:12000
-for (i in 1:12000) {
-  final2[i] <- 0
-  for (c in 1:30) {
-    final2[i] <- final2[i] + combinations[c, 2] * train_data_pca[i, c]
-  }
-}
-
-# Get the 3rd PC
-final3 <- 1:12000
-for (i in 1:12000) {
-  final3[i] <- 0
-  for (c in 1:30) {
-    final3[i] <- final3[i] + combinations[c, 3] * train_data_pca[i, c]
-  }
-}
-
-# Get the 4th PC
-final4 <- 1:12000
-for (i in 1:12000) {
-  final4[i] <- 0
-  for (c in 1:30) {
-    final4[i] <- final4[i] + combinations[c, 4] * train_data_pca[i, c]
-  }
-}
-
-# Get the 5th PC
-final5 <- 1:12000
-for (i in 1:12000) {
-  final5[i] <- 0
-  for (c in 1:30) {
-    final5[i] <- final5[i] + combinations[c, 5] * train_data_pca[i, c]
-  }
-}
-
-# Get the 6th PC
-final6 <- 1:12000
-for (i in 1:12000) {
-  final6[i] <- 0
-  for (c in 1:30) {
-    final6[i] <- final6[i] + combinations[c, 6] * train_data_pca[i, c]
-  }
-}
-
-# Get the 7th PC
-final7 <- 1:12000
-for (i in 1:12000) {
-  final7[i] <- 0
-  for (c in 1:30) {
-    final7[i] <- final7[i] + combinations[c, 7] * train_data_pca[i, c]
-  }
-}
-
-# Get the 8th PC
-final8 <- 1:12000
-for (i in 1:12000) {
-  final8[i] <- 0
-  for (c in 1:30) {
-    final8[i] <- final8[i] + combinations[c, 8] * train_data_pca[i, c]
-  }
-}
-
-# Get the 9th PC
-final9 <- 1:12000
-for (i in 1:12000) {
-  final9[i] <- 0
-  for (c in 1:30) {
-    final9[i] <- final9[i] + combinations[c, 9] * train_data_pca[i, c]
-  }
-}
+final <- get_principal_components(
+  dt_train_pca, combinations,
+  n_components, n_examples, n_numerical_features
+)
 
 # Get the final dataset
-dataset_pca <- matrix(c(final, final2, final3, final4, final5, final6, final7, final8, final9), nrow = 12000, ncol = 9)
-dataset_pca <- cbind(train_data[1:6], dataset_pca) # bind with the categorical variables
-dataset_pca <- cbind(dataset_pca, train_data$V37) # bind with the class variable
+dt_train_pca <- do.call(cbind, final)
+# Bind with the categorical variables
+dt_train_pca <- cbind(dt_train[1:6], dt_train_pca)
+# Bind with the class variable
+dt_train_pca <- cbind(dt_train_pca, dt_train[, 37])
 
 # Save the dataset
-write.csv(dataset_pca, "~/Desktop/dataset_pca")
+write.table(
+  dt_train_pca,
+  file = "Data/dt_train_original_pca.txt",
+  append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
+)
 
 
-##################
-# Principal Components Analysis on the Test Set
+# PCA on ORIGINAL Test Dataset
+# ----------------------------
+dt_test <- read.table("Data/dt_test_original.txt")
 
-# Get the test set
-test_data <- test_initial
-
-# Save categorical variables as factors
-test_data[, 37] <- as.factor(as.numeric(test_data[, 37]))
-test_data[1] <- as.factor(as.numeric(test_data[, 1]))
-test_data[2] <- as.factor(as.numeric(test_data[, 2]))
-test_data[3] <- as.factor(as.numeric(test_data[, 3]))
-test_data[4] <- as.factor(as.numeric(test_data[, 4]))
-test_data[5] <- as.factor(as.numeric(test_data[, 5]))
-test_data[6] <- as.factor(as.numeric(test_data[, 6]))
+# Convert categorical columns to factors
+dt_test[, c(1:6, 37)] <- lapply(dt_test[c(1:6, 37)], as.factor)
 
 # Apply standardized PCA to the continuous variables
-pca_st <- prcomp(test_data[, 7:36], scale = TRUE)
+pca_result <- prcomp(dt_test[, 7:36], scale = TRUE)
 
-# Scree Plot
-fviz_eig(pca_st)
-# 9 Components
+# Picking Number of components from PCA
+eigen_values <- get_eigenvalues(pca_result)
+eigen_values
 
-# Eigenvalues
-eig.val <- get_eigenvalue(pca_st)
-eig.val
+variance_explained <- get_variance_explained(eigen_values)
+variance_explained # let's pick 9 components
 
 # Lets keep 9 components
-combinations <- pca_st$rotation[, 1:9]
-combinations
+combinations <- pca_result$rotation[, 1:9]
 
 # Lets ignore the categorical variables when creating the new dataset
-train_data_pca <- test_data[7:36]
+dt_test_pca <- copy(dt_test[7:36])
 
-# Get the 1st PC
-final <- 1:12000
-for (i in 1:12000) {
-  final[i] <- 0
-  for (c in 1:30) {
-    final[i] <- final[i] + combinations[c, 1] * train_data_pca[i, c]
-  }
-}
+# Define number of examples and components
+n_numerical_features <- 30
+n_examples <- 12000
+n_components <- 9
 
-# Get the 2nd PC
-final2 <- 1:12000
-for (i in 1:12000) {
-  final2[i] <- 0
-  for (c in 1:30) {
-    final2[i] <- final2[i] + combinations[c, 2] * train_data_pca[i, c]
-  }
-}
-
-# Get the 3rd PC
-final3 <- 1:12000
-for (i in 1:12000) {
-  final3[i] <- 0
-  for (c in 1:30) {
-    final3[i] <- final3[i] + combinations[c, 3] * train_data_pca[i, c]
-  }
-}
-
-# Get the 4th PC
-final4 <- 1:12000
-for (i in 1:12000) {
-  final4[i] <- 0
-  for (c in 1:30) {
-    final4[i] <- final4[i] + combinations[c, 4] * train_data_pca[i, c]
-  }
-}
-
-# Get the 5th PC
-final5 <- 1:12000
-for (i in 1:12000) {
-  final5[i] <- 0
-  for (c in 1:30) {
-    final5[i] <- final5[i] + combinations[c, 5] * train_data_pca[i, c]
-  }
-}
-
-# Get the 6th PC
-final6 <- 1:12000
-for (i in 1:12000) {
-  final6[i] <- 0
-  for (c in 1:30) {
-    final6[i] <- final6[i] + combinations[c, 6] * train_data_pca[i, c]
-  }
-}
-
-# Get the 7th PC
-final7 <- 1:12000
-for (i in 1:12000) {
-  final7[i] <- 0
-  for (c in 1:30) {
-    final7[i] <- final7[i] + combinations[c, 7] * train_data_pca[i, c]
-  }
-}
-
-# Get the 8th PC
-final8 <- 1:12000
-for (i in 1:12000) {
-  final8[i] <- 0
-  for (c in 1:30) {
-    final8[i] <- final8[i] + combinations[c, 8] * train_data_pca[i, c]
-  }
-}
-
-# Get the 9th PC
-final9 <- 1:12000
-for (i in 1:12000) {
-  final9[i] <- 0
-  for (c in 1:30) {
-    final9[i] <- final9[i] + combinations[c, 9] * train_data_pca[i, c]
-  }
-}
+final <- get_principal_components(
+  dt_test_pca, combinations,
+  n_components, n_examples, n_numerical_features
+)
 
 # Get the final dataset
-dataset_pca_test <- matrix(c(final, final2, final3, final4, final5, final6, final7, final8, final9), nrow = 12000, ncol = 9)
-dataset_pca_test <- cbind(test_data[1:6], dataset_pca_test) # bind with the categorical variables
-dataset_pca_test <- cbind(dataset_pca_test, test_data$V37) # bind with the class variable
+dt_test_pca <- do.call(cbind, final)
+# Bind with the categorical variables
+dt_test_pca <- cbind(dt_test[1:6], dt_test_pca)
+# Bind with the class variable
+dt_test_pca <- cbind(dt_test_pca, dt_test[, 37])
 
 # Save the dataset
-write.csv(dataset_pca_test, "~/Desktop/dataset_pca_test")
+write.table(
+  dt_test_pca,
+  file = "Data/dt_test_original_pca.txt",
+  append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
+)
 
 
+# PCA on PROCESSED Train Dataset
+# ------------------------------
+dt_train_prosd <- read.table("Data/dt_train_processed.txt")
+head(dt_train_prosd)
 
-# PCA on the Processed Dataset (Train and Test)
+# Convert categorical columns to factors
+dt_train_prosd[, c(1:5, 27)] <- lapply(dt_train_prosd[c(1:5, 27)], as.factor)
 
-train_data <- read.table("train_processed", header = FALSE)
-test_data <- read.table("test_processed", header = FALSE)
+# Apply standardized PCA to the continuous variables
+pca_result <- prcomp(dt_train_prosd[, 6:26], scale = TRUE)
 
-# Standardized
-pca_st_train <- prcomp(train_data[, 6:26], scale = TRUE)
-pca_st_test <- prcomp(test_data[, 6:26], scale = TRUE)
+# Picking Number of components from PCA
+eigen_values <- get_eigenvalues(pca_result)
+eigen_values
 
-# Scree Plot - Train
-fviz_eig(pca_st_train)
-screeplot(pca_st_train)
+variance_explained <- get_variance_explained(eigen_values)
+variance_explained # let's pick 9 components
 
-# Scree Plot - Test
-fviz_eig(pca_st_test)
-screeplot(pca_st_test)
-
-# 7 Components
-# Eigenvalues - Train
-eig.val_train <- get_eigenvalue(pca_st_train)
-eig.val_train
-
-# Eigenvalues - Test
-eig.val_test <- get_eigenvalue(pca_st_test)
-eig.val_test
-
-# Only at the 10th dimension we get 80% variability - Train
-pca_st_train$rotation
 # Lets keep 9 components
+combinations <- pca_result$rotation[, 1:9]
 
-# Only at the 10th dimension we get 80% variability - Test
-pca_st_test$rotation
+# Lets ignore the categorical variables when creating the new dataset
+dt_train_prosd_pca <- copy(dt_train_prosd[6:26])
+
+# Define number of examples and components
+n_numerical_features <- 21
+n_examples <- 12000
+n_components <- 9
+
+final <- get_principal_components(
+  dt_train_prosd_pca, combinations,
+  n_components, n_examples, n_numerical_features
+)
+
+# Get the final dataset
+dt_train_prosd_pca <- do.call(cbind, final)
+# Bind with the categorical variables
+dt_train_prosd_pca <- cbind(dt_train_prosd[1:5], dt_train_prosd_pca)
+# Bind with the class variable
+dt_train_prosd_pca <- cbind(dt_train_prosd_pca, dt_train_prosd[, 27])
+
+# Save the dataset
+write.table(
+  dt_train_prosd_pca,
+  file = "Data/dt_train_processed_pca.txt",
+  append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
+)
+
+
+# PCA on PROCESSED Test Dataset
+# -----------------------------
+dt_test_prosd <- read.table("Data/dt_test_processed.txt")
+head(dt_test_prosd)
+
+# Convert categorical columns to factors
+dt_test_prosd[, c(1:5, 27)] <- lapply(dt_test_prosd[c(1:5, 27)], as.factor)
+
+# Apply standardized PCA to the continuous variables
+pca_result <- prcomp(dt_test_prosd[, 6:26], scale = TRUE)
+
+# Picking Number of components from PCA
+eigen_values <- get_eigenvalues(pca_result)
+eigen_values
+
+variance_explained <- get_variance_explained(eigen_values)
+variance_explained # let's pick 9 components
+
 # Lets keep 9 components
+combinations <- pca_result$rotation[, 1:9]
 
-# Train - PCA
-combinations_train <- pca_st_train$rotation[, 1:9]
-combinations_train
+# Lets ignore the categorical variables when creating the new dataset
+dt_test_prosd_pca <- copy(dt_test_prosd[6:26])
 
-train_data_pca <- train_data[6:26]
+# Define number of examples and components
+n_numerical_features <- 21
+n_examples <- 12000
+n_components <- 9
 
-# Get the 1st PC
-final_train <- 1:12000
-for (i in 1:12000) {
-  final_train[i] <- 0
-  for (c in 1:21) {
-    final_train[i] <- final_train[i] + combinations_train[c, 1] * train_data_pca[i, c]
-  }
-}
+final <- get_principal_components(
+  dt_test_prosd_pca, combinations,
+  n_components, n_examples, n_numerical_features
+)
 
-# Get the 2nd PC
-final_train2 <- 1:12000
-for (i in 1:12000) {
-  final_train2[i] <- 0
-  for (c in 1:21) {
-    final_train2[i] <- final_train2[i] + combinations_train[c, 2] * train_data_pca[i, c]
-  }
-}
+# Get the final dataset
+dt_test_prosd_pca <- do.call(cbind, final)
+# Bind with the categorical variables
+dt_test_prosd_pca <- cbind(dt_test_prosd[1:5], dt_test_prosd_pca)
+# Bind with the class variable
+dt_test_prosd_pca <- cbind(dt_test_prosd_pca, dt_test_prosd[, 27])
 
-# Get the 3rd PC
-final_train3 <- 1:12000
-for (i in 1:12000) {
-  final_train3[i] <- 0
-  for (c in 1:21) {
-    final_train3[i] <- final_train3[i] + combinations_train[c, 3] * train_data_pca[i, c]
-  }
-}
-
-# Get the 4th PC
-final_train4 <- 1:12000
-for (i in 1:12000) {
-  final_train4[i] <- 0
-  for (c in 1:21) {
-    final_train4[i] <- final_train4[i] + combinations_train[c, 4] * train_data_pca[i, c]
-  }
-}
-
-# Get the 5th PC
-final_train5 <- 1:12000
-for (i in 1:12000) {
-  final_train5[i] <- 0
-  for (c in 1:21) {
-    final_train5[i] <- final_train5[i] + combinations_train[c, 5] * train_data_pca[i, c]
-  }
-}
-
-# Get the 6th PC
-final_train6 <- 1:12000
-for (i in 1:12000) {
-  final_train6[i] <- 0
-  for (c in 1:21) {
-    final_train6[i] <- final_train6[i] + combinations_train[c, 6] * train_data_pca[i, c]
-  }
-}
-
-# Get the 7th PC
-final_train7 <- 1:12000
-for (i in 1:12000) {
-  final_train7[i] <- 0
-  for (c in 1:21) {
-    final_train7[i] <- final_train7[i] + combinations_train[c, 7] * train_data_pca[i, c]
-  }
-}
-
-# Get the 8th PC
-final_train8 <- 1:12000
-for (i in 1:12000) {
-  final_train8[i] <- 0
-  for (c in 1:21) {
-    final_train8[i] <- final_train8[i] + combinations_train[c, 8] * train_data_pca[i, c]
-  }
-}
-
-# Get the 9th PC
-final_train9 <- 1:12000
-for (i in 1:12000) {
-  final_train9[i] <- 0
-  for (c in 1:21) {
-    final_train9[i] <- final_train9[i] + combinations_train[c, 9] * train_data_pca[i, c]
-  }
-}
-
-dataset_pca_train <- c(final_train, final_train2, final_train3, final_train4, final_train5, final_train6, final_train7, final_train8, final_train9)
-
-dataset_pca_train <- matrix(c(final_train, final_train2, final_train3, final_train4, final_train5, final_train6, final_train7, final_train8, final_train9), nrow = 12000, ncol = 9)
-
-dataset_pca_train <- cbind(train_data[1:5], dataset_pca_train)
-dataset_pca_train <- cbind(dataset_pca_train, train_data$V27)
-
-write.csv(dataset_pca_train, "/home/ishi/Documentos/University-Projects/SMDM/Projeto/Git-Rep/2020-04-22/dataset_processed_pca_train")
-
-
-# Test Dataset - PCA
-combinations_test <- pca_st_train$rotation[, 1:9]
-combinations_test
-
-test_data_pca <- test_data[6:26]
-
-# Get the 1st PC
-final_test <- 1:12000
-for (j in 1:12000) {
-  final_test[j] <- 0
-  for (k in 1:21) {
-    final_test[j] <- final_test[j] + combinations_test[k, 1] * test_data_pca[j, k]
-  }
-}
-
-# Get the 2nd PC
-final_test2 <- 1:12000
-for (j in 1:12000) {
-  final_test2[j] <- 0
-  for (k in 1:21) {
-    final_test2[j] <- final_test2[j] + combinations_test[k, 2] * test_data_pca[j, k]
-  }
-}
-
-# Get the 3rd PC
-final_test3 <- 1:12000
-for (j in 1:12000) {
-  final_test3[j] <- 0
-  for (k in 1:21) {
-    final_test3[j] <- final_test3[j] + combinations_test[k, 3] * test_data_pca[j, k]
-  }
-}
-
-# Get the 4th PC
-final_test4 <- 1:12000
-for (j in 1:12000) {
-  final_test4[j] <- 0
-  for (k in 1:21) {
-    final_test4[j] <- final_test4[j] + combinations_test[k, 4] * test_data_pca[j, k]
-  }
-}
-
-# Get the 5th PC
-final_test5 <- 1:12000
-for (j in 1:12000) {
-  final_test5[j] <- 0
-  for (k in 1:21) {
-    final_test5[j] <- final_test5[j] + combinations_test[k, 5] * test_data_pca[j, k]
-  }
-}
-
-# Get the 6th PC
-final_test6 <- 1:12000
-for (j in 1:12000) {
-  final_test6[j] <- 0
-  for (k in 1:21) {
-    final_test6[j] <- final_test6[j] + combinations_test[k, 6] * test_data_pca[j, k]
-  }
-}
-
-# Get the 7th PC
-final_test7 <- 1:12000
-for (j in 1:12000) {
-  final_test7[j] <- 0
-  for (k in 1:21) {
-    final_test7[j] <- final_test7[j] + combinations_test[k, 7] * test_data_pca[j, k]
-  }
-}
-
-# Get the 8th PC
-final_test8 <- 1:12000
-for (j in 1:12000) {
-  final_test8[j] <- 0
-  for (k in 1:21) {
-    final_test8[j] <- final_test8[j] + combinations_test[k, 8] * test_data_pca[j, k]
-  }
-}
-
-# Get the 9th PC
-final_test9 <- 1:12000
-for (j in 1:12000) {
-  final_test9[j] <- 0
-  for (k in 1:21) {
-    final_test9[j] <- final_test9[j] + combinations_test[k, 9] * test_data_pca[j, k]
-  }
-}
-
-dataset_pca_test <- c(final_test, final_test2, final_test3, final_test4, final_test5, final_test6, final_test7, final_test8, final_test9)
-
-dataset_pca_test <- matrix(c(final_test, final_test2, final_test3, final_test4, final_test5, final_test6, final_test7, final_test8, final_test9), nrow = 12000, ncol = 9)
-
-dataset_pca_test <- cbind(test_data[1:5], dataset_pca_test)
-dataset_pca_test <- cbind(dataset_pca_test, test_data$V27)
-
-write.csv(dataset_pca_test, "/home/ishi/Documentos/University-Projects/SMDM/Projeto/Git-Rep/2020-04-22/dataset_processed_pca_test")
+# Save the dataset
+write.table(
+  dt_test_prosd_pca,
+  file = "Data/dt_test_processed_pca.txt",
+  append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
+)

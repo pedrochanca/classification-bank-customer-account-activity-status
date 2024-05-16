@@ -16,6 +16,7 @@ install.packages("devtools", dependencies = TRUE)
 # conda install -c conda-forge r-caret
 # conda install -c conda-forge r-klar
 
+
 library("devtools")
 
 devtools::install_github("pohlio/tidyinftheo")
