@@ -20,7 +20,6 @@ head(dt_test)
 
 # Descriptive Statistics
 # ----------------------
-
 v <- sapply(dt_train[, 7:36], var)
 m <- sapply(dt_train[, 7:36], mean)
 q <- sapply(dt_train[, 7:36], quantile)
@@ -39,27 +38,26 @@ show <- TRUE
 if (show) {
   descriptive
 } else {
-  folder <- "Output/"
-  file <- "descriptive.csv"
-  suppressWarnings(dir.create(folder))
-  write.csv(descriptive, file = paste(path, file, sep = ""))
+  write.csv(descriptive, file = "Data/descriptive.csv")
 }
 
 # Trying some transformations on low variance columns
-# to indetify why it has a low variance
+# to identify why it has a low variance
 var(log(dt_train[, 22]) + 1)
 
 
 # Plotting histograms of each variable, and signaling the class for each data
-i <- 36
-class1 <- data.frame(v = dt_train[dt_train[37] == "0", i])
-class0 <- data.frame(v = dt_train[dt_train[37] == "1", i])
+# ---------------------------------------------------------------------------
+feature_index <- 10
+class1 <- data.frame(v = dt_train[dt_train[51] == "0", feature_index])
+class0 <- data.frame(v = dt_train[dt_train[51] == "1", feature_index])
 class1$Class <- "Class 1"
 class0$Class <- "Class 0"
 class_counts <- rbind(class1, class0)
+
 # Continuous
 ggplot(class_counts, aes(v, fill = Class)) +
-  labs(x = paste("V", i, sep = "")) +
+  labs(x = paste("V", feature_index, sep = "")) +
   geom_histogram(bins = 50) +
   theme(
     plot.title = element_text(size = 12, face = "bold"),
@@ -68,7 +66,7 @@ ggplot(class_counts, aes(v, fill = Class)) +
   )
 # Discrete
 ggplot(class_counts, aes(v, fill = Class)) +
-  labs(x = paste("V", i, sep = "")) +
+  labs(x = paste("V", feature_index, sep = "")) +
   geom_bar() +
   theme(
     plot.title = element_text(size = 12, face = "bold"),
@@ -77,41 +75,48 @@ ggplot(class_counts, aes(v, fill = Class)) +
   )
 
 
-# Computingd the correlations and plotting the correlogram
+# Compute Correlations + Plot Correlogram
+# ---------------------------------------
 corvar <- cor(dt_train[7:50])
-corrplot(corvar,
+corrplot(
+  corvar,
   method = "color", col = brewer.pal(n = 8, name = "RdBu"), type = "lower",
   tl.col = "black", addCoef.col = "black", tl.srt = 15, tl.cex = 0.6,
   number.cex = 0.7
 )
 
-# Computing the mutual information using python
+
+# Compute Mutual Information with Python
+# --------------------------------------
 m_dt_train <- as.matrix(dt_train, dimnames = NULL)
 mut_inf <- sklearn1$mutual_info_classif(m_dt_train, m_dt_train[, 37])
 
 # If we only want to source some script of python
 # py_run_file("add.py") # nolint
 
-dt_train[, 1] <- as.ordered(dt_train[, 1])
-dt_train[, 2] <- as.ordered(dt_train[, 2])
-dt_train[, 3] <- as.ordered(dt_train[, 3])
-dt_train[, 4] <- as.ordered(dt_train[, 4])
-dt_train[, 5] <- as.ordered(dt_train[, 5])
-dt_train[, 6] <- as.ordered(dt_train[, 6])
-dt_train[, 51] <- as.ordered(dt_train[, 51])
+# Transform into an mRMR Dataset
+# ------------------------------
+dt_train_mrmr <- copy(dt_train)
 
+for (i in c(1:6, 51)) {
+  dt_train_mrmr[, i] <- as.ordered(dt_train_mrmr[, i])
+}
 
-# Transform into an MRMR Dataset
-train_mrmr <- mRMR.data(dt_train)
+dt_train_mrmr <- mRMR.data(dt_train_mrmr)
 
-# MRMR Algorithm
+# Apply mRMR Algorithm to select features
 feat_sel <- mRMR.classic(
-  data = train_mrmr, target_indices = 51, feature_count = 50
+  data = dt_train_mrmr, target_indices = 51, feature_count = 50
 )
 feat_sel@filters
-# feat_sel@scores
-# solutions(feat_sel)
+feat_sel@scores
+solutions(feat_sel)
 
+feat_sel
+
+
+# Processed Train Dataset after EDA
+# ---------------------------------
 index_columns <- c(1:2, 4:10, 14:21, 24:25, 27:28, 30, 32, 36, 39, 43, 51)
 dt_train_removed <- dt_train[, index_columns]
 write.table(dt_train_removed,

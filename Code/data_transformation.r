@@ -107,7 +107,7 @@ dt_train_extra[, 51] <- copy(dt_train[, 37])
 
 # Saving the dataset
 write.table(
-  dt_train,
+  dt_train_extra,
   file = "Data/dt_train_original_extra.txt",
   append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
 )
