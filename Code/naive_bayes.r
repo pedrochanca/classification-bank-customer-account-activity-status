@@ -1,54 +1,61 @@
 # Libraries
-library(caret)
-library(e1071)
+library("caret")
+library("e1071")
+library("data.table")
 
-# Get the train and test sets
-train_data = train_initial
-test_data = test_initial
+# Get the Train and Test Datasets
+dt_train <- read.table("Data/dt_train_original.txt")
+dt_test <- read.table("Data/dt_test_original.txt")
 
-# Save categorical variables as factors
-train_data[,37] = as.factor(as.numeric(train_data[,37]))
-train_data[1] = as.factor(as.numeric(train_data[,1]))
-train_data[2] = as.factor(as.numeric(train_data[,2]))
-train_data[3] = as.factor(as.numeric(train_data[,3]))
-train_data[4] = as.factor(as.numeric(train_data[,4]))
-train_data[5] = as.factor(as.numeric(train_data[,5]))
-train_data[6] = as.factor(as.numeric(train_data[,6]))
+# Split Features and Target
+# -------------------------
+# Create object x which holds the features
+x_train <- copy(dt_train[, -37])
+x_test <- copy(dt_test[, -37])
 
-test_data[,37] = as.factor(as.numeric(test_data[,37]))
-test_data[1] = as.factor(as.numeric(test_data[,1]))
-test_data[2] = as.factor(as.numeric(test_data[,2]))
-test_data[3] = as.factor(as.numeric(test_data[,3]))
-test_data[4] = as.factor(as.numeric(test_data[,4]))
-test_data[5] = as.factor(as.numeric(test_data[,5]))
-test_data[6] = as.factor(as.numeric(test_data[,6]))
+# Create an object y which holds the target
+y_train <- factor(copy(dt_train[, 37]))
+y_test <- factor(copy(dt_test[, 37]))
 
-# Get the same number of factor on train and test set
-levels(train_data$V3) <- levels(test_data$V3)
-levels(train_data$V1) <- levels(test_data$V1)
-levels(train_data$V2) <- levels(test_data$V2)
-levels(train_data$V4) <- levels(test_data$V4)
-levels(train_data$V5) <- levels(test_data$V5)
-levels(train_data$V6) <- levels(test_data$V6)
+head(y_train)
+head(y_test)
 
-# Create object x which holds the predictor variables and y which holds the response variables
-x_bayes = train_data[,-37]
-y_bayes = train_data$V37
+# Fit the Model
+# -------------
+# Define the training control
+# Methods tested:
+# 'boot' (bootstrap), 'cv' (k-fold cross validation), 'repeatedcv'
+train_control <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 
-# Bayes classifier
-# ----------------
 # Tuning the smoothing
-search_grid = expand.grid(usekernel = c(TRUE, FALSE), fL = 0:1, adjust = 1)
+search_grid <- expand.grid(usekernel = c(TRUE, FALSE), fL = 0:1, adjust = 1)
 
-# Trainig the model
-model = train(x_bayes,y_bayes,'nb',trControl=trainControl(method='cv'), tuneGrid = search_grid)
+# Trainig the Naive Bayes Model
+model <- train(
+  x_train, y_train, "nb",
+  trControl = train_control,
+  tuneGrid = search_grid
+)
 
-# Predict the test set
-pred_bayes <- predict(model,newdata = test_data)
+# Train Evaluation
+# ----------------
+# predict target values
+y_pred <- predict(model, newdata = x_train)
+# get confusion matrix, accuracy and other metrics
+confusionMatrix(y_pred, y_train)
 
-# Get the confusion matrix to see accuracy value and other parameter values
-confusionMatrix(pred_bayes, test_data$V37 )
+# Test Evaluation
+# ---------------
+# predict target values
+y_pred <- predict(model, newdata = x_test)
+# get confusion matrix, accuracy and other metrics
+confusionMatrix(y_pred, y_test)
 
 # Plot variables performance
-var_importance <- varImp(model)
-plot(var_importance, xlab = "Importance", ylab = "Variables", main = "Variables Importance on the Naive Bayes Classifier")
+# --------------------------
+variable_importance <- varImp(model)
+plot(
+  variable_importance,
+  xlab = "Importance", ylab = "Variables",
+  main = "Variables Importance on the Naive Bayes Classifier"
+)
