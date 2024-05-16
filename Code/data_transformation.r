@@ -130,26 +130,29 @@ dt_test_extra[, 38] <- (
 dt_test_extra[, 39] <- copy(dt_test[, 37])
 
 
-# New Train Dataset with removed features
+# New Train dataset with processed features
 # This was done after having assessed the results from the EDA
 # ------------------------------------------------------------
+index_columns <- c(1:2, 4:10, 14:21, 24:25, 27:28, 30, 32, 36, 39, 43, 51)
+dt_train_processed <- copy(
+  dt_train_extra[, index_columns]
+)
+write.table(
+  dt_train_processed,
+  file = "Data/dt_train_processed.txt",
+  append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
+)
 
 
-
-
-
-
-
-
-# New Test Dataset with removed features
+# New Test dataset with processed features
 # This was done after having assessed the results from the EDA
 # ------------------------------------------------------------
-index_columns <- c(1:10, 14:21, 24:25, 27:28, 30, 32, 36:39)
-dt_test_removed <- copy(
+index_columns <- c(1:2, 4:10, 14:21, 24:25, 27:28, 30, 32, 36:39)
+dt_test_processed <- copy(
   dt_test_extra[, index_columns]
 )
 write.table(
-  dt_test_removed,
-  file = "Data/dt_test_removed.txt",
+  dt_test_processed,
+  file = "Data/dt_test_processed.txt",
   append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
 )

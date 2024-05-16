@@ -88,8 +88,8 @@ corrplot(
 
 # Compute Mutual Information with Python
 # --------------------------------------
-m_dt_train <- as.matrix(dt_train, dimnames = NULL)
-mut_inf <- sklearn1$mutual_info_classif(m_dt_train, m_dt_train[, 37])
+# m_dt_train <- as.matrix(dt_train, dimnames = NULL)
+# mut_inf <- sklearn1$mutual_info_classif(m_dt_train, m_dt_train[, 37])
 
 # If we only want to source some script of python
 # py_run_file("add.py") # nolint
@@ -117,15 +117,16 @@ feat_sel
 
 # Processed Train Dataset after EDA
 # ---------------------------------
-index_columns <- c(1:2, 4:10, 14:21, 24:25, 27:28, 30, 32, 36, 39, 43, 51)
-dt_train_removed <- dt_train[, index_columns]
-write.table(dt_train_removed,
-  file = "train_data_removed", append = FALSE, sep = " ", dec = ".",
-  row.names = FALSE, col.names = FALSE
-)
+dt_train_processed <- read.table("Data/dt_train_processed.txt")
+dt_test_processed <- read.table("Data/dt_test_processed.txt")
 
-corvar <- cor(train_data_removed[6:26])
-corrplot(corvar,
-  method = "color", col = brewer.pal(n = 8, name = "RdBu"), type = "lower", tl.col = "black",
-  addCoef.col = "black", tl.srt = 15, tl.cex = 0.6, number.cex = 0.7
+head(dt_train_processed)
+head(dt_test_processed)
+
+corvar <- cor(dt_train_processed[6:26])
+corrplot(
+  corvar,
+  method = "color", col = brewer.pal(n = 8, name = "RdBu"), type = "lower",
+  tl.col = "black", addCoef.col = "black", tl.srt = 15, tl.cex = 0.6,
+  number.cex = 0.7
 )
