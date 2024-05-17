@@ -194,6 +194,8 @@ write.table(
   append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
 )
 
+head(dt_train_prosd_pca)
+
 
 # PCA on PROCESSED Test Dataset
 # -----------------------------
@@ -242,3 +244,5 @@ write.table(
   file = "Data/dt_test_processed_pca.txt",
   append = FALSE, sep = " ", dec = ".", row.names = FALSE, col.names = FALSE
 )
+
+head(dt_test_prosd_pca)

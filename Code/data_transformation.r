@@ -1,3 +1,4 @@
+# Libraries
 library("data.table")
 
 # Load Train Data
@@ -116,8 +117,8 @@ write.table(
 # New Test Dataset with extra features
 # The new features are transformations of the existing ones
 # ---------------------------------------------------------
-dt_test_extra <- copy(dt_train)
-head(dt_train_extra)
+dt_test_extra <- copy(dt_test)
+head(dt_test_extra)
 
 dt_test_extra[, 37] <- (
   (dt_test_extra[, 19] - mean(dt_test_extra[, 19]))^2 +

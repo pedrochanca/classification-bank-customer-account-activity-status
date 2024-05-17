@@ -3,12 +3,34 @@
 # regLogistic  Regularized Logistic Regression
 # http://topepo.github.io/caret/train-models-by-tag.html#logic-regression
 
-library(caret)
-library(MLmetrics)
-library(kknn)
-# with library class
-require("class")
-library(class)
+# Libraries
+library("caret")
+library("MLmetrics")
+library("kknn")
+library("class")
+
+########## HOW TO RUN IT: ###########
+
+# For each classifier, its necessary to replace the "method" and the tuning paramt. by replacing:
+## knn: "kknn"
+#  tuning paramt: kmax = seq(1, 25, 2), distance=1:2, kernel=c("optimal","rectangular","gaussian")
+
+## Random Forest: "rf"             -
+# tuning paramt: mtry = 1:20
+
+## Logistic Regression boosted: "LogitBoost"     -
+# tuning paramt: nIter = seq(1, 25, 2)
+
+# Its necessary to replace the datasets as well
+
+# The datasets:             X train |  X test | Y train | Y test
+#                           -------------------------------------
+# Initial Dataset :         x_train    x_test   y_train   y_test
+# Processed Dataset :       x_train3   x_test3  y_train3  y_test3
+# Initial Dataset w/ PCA:   x_train4   x_test4  y_train4  y_test4
+# Processed Dataset w/ PCA: x_train5   x_test5  y_train5  y_test5
+
+######################################
 
 
 # Load Datasets
@@ -87,28 +109,7 @@ x_test5 <- dataset.pca.test2[, 1:23] # 23 first columns are the features
 
 
 
-########## HOW TO RUN IT: ###########
 
-# For each classifier, its necessary to replace the "method" and the tuning paramt. by replacing:
-## knn: "kknn"
-#  tuning paramt: kmax = seq(1, 25, 2), distance=1:2, kernel=c("optimal","rectangular","gaussian")
-
-## Random Forest: "rf"             -
-# tuning paramt: mtry = 1:20
-
-## Logistic Regression boosted: "LogitBoost"     -
-# tuning paramt: nIter = seq(1, 25, 2)
-
-# Its necessary to replace the datasets as well
-
-# The datasets:             X train |  X test | Y train | Y test
-#                           -------------------------------------
-# Initial Dataset :         x_train    x_test   y_train   y_test
-# Processed Dataset :       x_train3   x_test3  y_train3  y_test3
-# Initial Dataset w/ PCA:   x_train4   x_test4  y_train4  y_test4
-# Processed Dataset w/ PCA: x_train5   x_test5  y_train5  y_test5
-
-######################################
 
 # Set seed
 # --------
@@ -120,15 +121,15 @@ set.seed(2020)
 
 # Train the model
 pred.knn.m2 <- train(CL ~ .,
-    method = "kknn",
-    tuneGrid = expand.grid(
-        kmax = seq(1, 25, 2),
-        distance = 1:2,
-        kernel = c("optimal", "rectangular", "gaussian")
-    ),
-    trControl = trainControl(method = "repeatedcv", number = 5, repeats = 4),
-    metric = "Accuracy",
-    data = cbind(CL = as.factor(y_train), x_train)
+  method = "kknn",
+  tuneGrid = expand.grid(
+    kmax = seq(1, 25, 2),
+    distance = 1:2,
+    kernel = c("optimal", "rectangular", "gaussian")
+  ),
+  trControl = trainControl(method = "repeatedcv", number = 5, repeats = 4),
+  metric = "Accuracy",
+  data = cbind(CL = as.factor(y_train), x_train)
 )
 
 # Summarize the results
@@ -145,15 +146,15 @@ confusionMatrix(fitm2, as.factor(y_test))
 
 # Train the model
 pred.knn.m3 <- train(CL ~ .,
-    method = "kknn",
-    tuneGrid = expand.grid(
-        kmax = seq(1, 25, 2),
-        distance = 1:2,
-        kernel = c("optimal", "rectangular", "gaussian")
-    ),
-    trControl = trainControl(method = "boot", number = 100),
-    metric = "Accuracy",
-    data = cbind(CL = as.factor(y_train), x_train)
+  method = "kknn",
+  tuneGrid = expand.grid(
+    kmax = seq(1, 25, 2),
+    distance = 1:2,
+    kernel = c("optimal", "rectangular", "gaussian")
+  ),
+  trControl = trainControl(method = "boot", number = 100),
+  metric = "Accuracy",
+  data = cbind(CL = as.factor(y_train), x_train)
 )
 
 # Summarize the results
@@ -170,11 +171,11 @@ confusionMatrix(fitm3, as.factor(y_test))
 
 # Train the model
 pred.knn.m4 <- train(CL ~ .,
-    method     = "LogitBoost",
-    tuneGrid   = expand.grid(nIter = seq(1, 25, 2)),
-    trControl  = trainControl(method = "LOOCV"),
-    metric     = "Accuracy",
-    data       = cbind(CL = as.factor(y_train), x_train)
+  method     = "LogitBoost",
+  tuneGrid   = expand.grid(nIter = seq(1, 25, 2)),
+  trControl  = trainControl(method = "LOOCV"),
+  metric     = "Accuracy",
+  data       = cbind(CL = as.factor(y_train), x_train)
 )
 
 # Summarize the results
@@ -191,11 +192,11 @@ confusionMatrix(fitm4, as.factor(y_test))
 
 # Train the model
 pred.knn.m53 <- train(CL ~ .,
-    method     = "rf",
-    tuneGrid   = expand.grid(mtry = 1:20),
-    trControl  = trainControl(method = "cv", number = 10),
-    metric     = "Accuracy",
-    data       = cbind(CL = as.factor(y_train), x_train)
+  method     = "rf",
+  tuneGrid   = expand.grid(mtry = 1:20),
+  trControl  = trainControl(method = "cv", number = 10),
+  metric     = "Accuracy",
+  data       = cbind(CL = as.factor(y_train), x_train)
 )
 
 # Summarize the results

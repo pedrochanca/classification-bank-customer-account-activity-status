@@ -56,6 +56,7 @@ for (c in c_range) {
 }
 
 
+# ------ TO BE FINISHED
 
 # Function to do Cross Validation to find the best pair
 # of hyper parameters discovered previously
