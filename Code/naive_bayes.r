@@ -1,6 +1,10 @@
 # Libraries
 library("caret")
 source("Code/utils.r")
+set.seed(2020)
+
+
+
 
 
 # Get the Train and Test Datasets
@@ -13,11 +17,15 @@ dt_train <- result$train
 dt_test <- result$test
 
 # convert categorical columns to factors
-dt_train <- convert_cat_to_factor(dt_train, dt_type)
-dt_test <- convert_cat_to_factor(dt_test, dt_type)
+# dt_train <- convert_cat_to_factor(dt_train, dt_type)
+# dt_test <- convert_cat_to_factor(dt_test, dt_type)
 
 # align factor levels
-dt_train <- align_factor_levels(dt_train, dt_test)
+# dt_train <- align_factor_levels(dt_train, dt_test)
+
+# convert target column values to factor
+dt_train <- convert_target_to_factor(dt_train, dt_type)
+dt_test <- convert_target_to_factor(dt_test, dt_type)
 
 # visualize
 head(dt_train)
@@ -31,8 +39,6 @@ y_train <- result$y
 result <- split_feature_target(dt_test, dt_type)
 x_test <- result$x
 y_test <- result$y
-
-
 
 
 
@@ -67,6 +73,8 @@ plot(
   xlab = "Importance", ylab = "Variables",
   main = "Variables Importance on the Naive Bayes Classifier"
 )
+
+
 
 
 

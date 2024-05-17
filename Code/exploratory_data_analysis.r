@@ -85,13 +85,6 @@ corrplot(
   number.cex = 0.7
 )
 
-# Compute Mutual Information with Python
-# --------------------------------------
-# m_dt_train <- as.matrix(dt_train, dimnames = NULL)
-# mut_inf <- sklearn1$mutual_info_classif(m_dt_train, m_dt_train[, 37])
-
-# If we only want to source some script of python
-# py_run_file("add.py") # nolint
 
 # Transform into an mRMR Dataset
 # ------------------------------

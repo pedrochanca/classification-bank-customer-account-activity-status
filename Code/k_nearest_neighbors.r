@@ -6,7 +6,6 @@ set.seed(2020)
 
 
 
-
 # Get the Train and Test Datasets
 # -------------------------------
 dt_type <- "original"
@@ -43,20 +42,23 @@ y_test <- result$y
 
 
 
-
 # Fit the model
 # -------------
 
-# define train control ('boot', 'cv', 'repeatedcv')
+# define train control ('boot', 'cv', 'repeatedcv', 'loocv')
 validation_method <- "cv"
 train_control <- get_train_control(validation_method)
 
 # define smoothing
-search_grid <- expand.grid(mtry = 3:4)
+search_grid <- expand.grid(
+  kmax = seq(1, 25, 2),
+  distance = 1:2,
+  kernel = c("optimal", "rectangular", "gaussian")
+)
 
 # fit the model
 model <- train(
-  x_train, y_train, "rf",
+  x_train, y_train, "kknn",
   trControl = train_control,
   tuneGrid = search_grid,
   metric = "Accuracy"

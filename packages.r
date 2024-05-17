@@ -16,9 +16,9 @@ install.packages("devtools", dependencies = TRUE)
 # conda install -c conda-forge r-caret
 # conda install -c conda-forge r-klar
 
-
 library("devtools")
 
 devtools::install_github("pohlio/tidyinftheo")
 devtools::install_github("mdscheuerell/muti")
 devtools::install_github("bhklab/mrmre")
+devtools::install_github("KlausVigo/kknn")
