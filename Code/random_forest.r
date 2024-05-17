@@ -12,9 +12,9 @@ set.seed(2020)
 dt_type <- "original"
 
 # get datasets
-result <- get_dataset(dt_type)
-dt_train <- result$train
-dt_test <- result$test
+dt <- get_dataset(dt_type)
+dt_train <- dt$train
+dt_test <- dt$test
 
 # convert categorical columns to factors
 # dt_train <- convert_cat_to_factor(dt_train, dt_type)
@@ -44,7 +44,7 @@ y_test <- result$y
 
 
 
-# Fit the Model
+# Fit the model
 # -------------
 
 # define train control ('boot', 'cv', 'repeatedcv')
@@ -52,11 +52,11 @@ validation_method <- "cv"
 train_control <- get_train_control(validation_method)
 
 # define smoothing
-search_grid <- expand.grid(usekernel = c(TRUE, FALSE), fL = 0:1, adjust = 1)
+search_grid <- expand.grid(mtry = 3:4)
 
 # fit the model
 model <- train(
-  x_train, y_train, "nb",
+  x_train, y_train, "rf",
   trControl = train_control,
   tuneGrid = search_grid,
   metric = "Accuracy"
@@ -65,14 +65,6 @@ model <- train(
 # summarized results
 print(model)
 plot(model)
-
-# variable importance
-variable_importance <- varImp(model)
-plot(
-  variable_importance,
-  xlab = "Importance", ylab = "Variables",
-  main = "Variables Importance on the Naive Bayes Classifier"
-)
 
 
 
